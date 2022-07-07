@@ -1,4 +1,5 @@
-// FUNÇÕES SECUNDÁRIAS QUE SERÃO UTILIZADAS EM TODO O PROJETO POR OUTRAS FUNÇÕES -> PRINCIPAIS
+// FUNÇÕES SECUNDÁRIAS QUE SERÃO UTILIZADAS EM TODO O PROJETO POR OUTRAS FUNÇÕES
+// -> PRINCIPAIS
 class SecundaryFunctions {
     getUserSheet() {                                        //Pegando o nome do usuário para saber o index da planilha que está em uso
         const userName = SpreadsheetApp.getActiveSheet().getName()
@@ -56,6 +57,17 @@ class SecundaryFunctions {
         })
         return totalConferido
     }
+
+    returnLastIndex_historico() {
+        const historicoSheet = SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheets()[4])                  //Coletando a planilha historico de pedidos para uso
+
+        const historicoData = historicoSheet.getRange("A:A").getValues()
+            .map((numPedido, index) => ({ num_pedido: numPedido, index: index + 1 }))
+            .filter(({ item }) => item != "")
+
+        return historicoData[historicoData.length - 1].index + 1                //Retornando a ultima linha em que foi encontrada um valor -> Utilizando essa função eu consigo saber onde posso alocar uma linha
+    }
+
 }
 //FUNÇÕES PRINCIPAIS QUE SERÃO UTILIZADAS PELOS BOTÕES -> ESSAS FUNÇÕES UTILIZARÃO AS FUNÇÕES SECUNDÁRIAS
 
@@ -134,7 +146,7 @@ function doOnEdit() {                                           //Essa função 
     const row_tipo = principalSheet.getRange("H" + active_range_row).getValue()             //Coletando o tipo de dado que será bipado ["CX", "PC"]
 
     if (row_totalConferido === row_totalItens) {                                            //Checando se o pedido já foi finalizado de acordo com o total de referências bipadas
-        postMessage("O pedido já foi finalizado")                                           //se sim ele retorna uma mensagem
+        postMessage("A referência já foi finalizada")                                           //se sim ele retorna uma mensagem
         return                                                                              //Retorna par não continuar a função
     }
 
@@ -152,23 +164,29 @@ function doOnEdit() {                                           //Essa função 
     //PASSO 3) Verificar a quantidade de itens que estarão sendo checados a partir do tipo
     let qntItem;
     //~~~~~~~~~~~~ Funcionou [x] -> retornando 1 ou quantidade de itens em uma caixa
-    if (row_tipo == "CX") {                                         //Analizando se é um valor válido
+    if (row_tipo == "CX") {                                                                 //Analizando se é um valor válido
         qntItem = new SecundaryFunctions().returnQntCaixa(row_referencia)                   //Se for CX eu somo a quantidade de itens por caisa ao valor da qntItem
     } else if (row_tipo == "PC") {
         qntItem = 1                                                 //Se for PC eu somo a quantidade de itens com + 1
-    } else {                                                        //retornando caso não seja
+    } else {                                                                                //retornando caso não seja
         postMessage("Insira um tipo de conferência na célula H5")
         return
     }
 
-    principalSheet.getRange("G" + active_range_row).setValue(Number(row_totalConferido) + 1)
+    if (qntItem + Number(row_totalConferido) > row_totalItens) {
+        postMessage("A quantidade de itens checados passou do total")
+        SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheets()[indexSpreadsheet])
+        return
+    }
+
+    principalSheet.getRange("G" + active_range_row).setValue(Number(row_totalConferido) + qntItem)                                        //Inserindo o total de itens mais o que acabou de ser bipado, podendo ser >= 1
     // PASSO 4) Com a quantidade em mãos, devo selecionar a planilha de histórico e adicionar lá os dados referentes ao pedido
     //~~~~~~~~~~~~ [] Verificar se essa mesma linha já existe no histórico, começando pelo número do pedido e depois pela referência do item
     //~~~~~~~~~~~~ [] Se existir, somar o final
     //~~~~~~~~~~~~ [] Se não existir, adicionar uma nova linha
     const data = principalSheet.getRange(`A${active_range_row}:E${active_range_row}`).getValues()                                   //Separando as informações que que existem na planilha do usuário
-    data[0].push(Number(row_totalConferido) + 1)
-    console.log(data)
+    data[0].push(Number(row_totalConferido) + qntItem)                                                                              //Inserindo o total de itens mais o que acabou de ser bipado, podendo ser >= 1
+
     const historicoSheet = SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheets()[4])                      //Transferindo a planilha de histórico em uma variável
     historicoSheet.getRange("A2:F2").setValues(data)
     // FINAL) Retornar a planilha principal => planilha referente ao usuário que iniciou a função
