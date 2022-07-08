@@ -27,7 +27,7 @@ class SecundaryFunctions {
         return ["Yuri", "João", "Josevaldo"].indexOf(userName)                      //Coletando o nome a partir do index em que ele se encontra em um array
     }
     apagarInformacoes(planilha, range) {                    //Passando dois parâmetos para apagar as informações
-        planilha.getRange(range).clearContent()             //Simplesmente apagando o conteúdo passado
+        planilha.getRange(range).clearContent()                             //Simplesmente apagando o conteúdo passado
     }
     returnQntCaixa(referencia) {                            //A referência será uma string, nome de um produto cadastrado no sistema da empresa
         const descricaoSheet = new SetActiveSheet().setDescricaoSheet()             //Coletando a planilha descricao para uso
@@ -53,10 +53,10 @@ class SecundaryFunctions {
 
         return EAN                                           //A quantidade será um numero
     }
-    returnDate() {
-        function addZero(i) {
-            if (i < 10) { i = "0" + i }
-            return i;
+    returnDate() {                                          //Essa função retorna a data do momento, já levando em conta nosso horário
+        function addZero(i) {                               //recebe um número
+            if (i < 10) { i = "0" + i }                                     //Sendo menor que 10 ele irá adicionar um 0 na frente para ficar com formato de hora
+            return i;                                                       //Sendo maior ou igual a 10 ele apenas retorna normalmente
         }
 
         const moment = Date.now()
@@ -73,7 +73,7 @@ class SecundaryFunctions {
 }
 
 class Historico {
-    checkIfPedidoExists(numPedido) {
+    checkIfPedidoExists(numPedido) {                        //Se existir um pedido ele retorna algumas chaves que serão utilizadas por outras funções, como se fosse uma espécie de save de dados
         const historicoSheet = new SetActiveSheet().setHistoricoSheet()
 
         const historicoData = historicoSheet.getRange("A:A").getValues()                //Coletando as informações que tem o mesmo número do pedido já as separando -> COLUNA A
@@ -90,7 +90,7 @@ class Historico {
         return historicoData
     }
 
-    returnAvailableRange(numPedido, referencia) {               //Retornarei apenas a posição onde poderei estar inserindo a linha
+    returnAvailableRange(numPedido, referencia) {           //Retornarei apenas a posição onde poderei estar inserindo a linha
         const historicoSheet = new SetActiveSheet().setHistoricoSheet()                 //Setando a planilha histórico            
 
         const historicoData = historicoSheet.getRange("A:A").getValues()                //Configurando a variável data            
@@ -117,6 +117,7 @@ class Historico {
         }
     }
 }
+
 //FUNÇÕES PRINCIPAIS QUE SERÃO UTILIZADAS PELOS BOTÕES -> ESSAS FUNÇÕES UTILIZARÃO AS FUNÇÕES SECUNDÁRIAS
 function gerarPedido() {                                    //Gerar o pedido -> Coletar todas as informações necessárias para realizar o processo
     const indexSpreadsheet = new SecundaryFunctions().getUserSheet()    //Coletando o index da planilha em que o usuário está -> só funciona se for seu nome
