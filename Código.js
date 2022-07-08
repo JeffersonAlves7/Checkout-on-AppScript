@@ -36,7 +36,7 @@ class SecundaryFunctions {
 
         const quantidade = descricaoSheet.getRange("C" + descricao_data[0].index).getValue()
 
-        return quantidade                                           //A quantidade será um numero
+        return quantidade                                                           //A quantidade será um numero
     }
     returnEAN(referencia) {                                 //Retornarei o ean do item, para que em outras funções eu possa ver se o usuário realmente inseriu o ean correto para o item do checkout
         const descricaoSheet = new SetActiveSheet().setDescricaoSheet()  //Coletando a planilha descricao para uso
@@ -57,18 +57,52 @@ class Historico {
         const historicoSheet = new SetActiveSheet().setHistoricoSheet()
 
         const historicoData = historicoSheet.getRange("A:A").getValues()                //Coletando as informações que tem o mesmo número do pedido já as separando -> COLUNA A
-            .filter(value => value != "")
-            .map((numPedido, index) => ({
-                num_pedido: numPedido[0],                                               //Salvando o número do pedido -> que foi coletado na coluna A
-                referencia: historicoSheet.getRange("B" + (index + 1)).getValue(),      //Salvando referência -> coluna B
-                total_conferido: historicoSheet.getRange("F" + (index + 1)).getValue()  //Salvando total conferido -> coluna F
+            .map((pedido, index) => ({ numPedido: pedido, index: index + 1 }))          //1° => mapear os dados para conseguir salvar on index (a linha que foi encontrada)                      
+            .filter(({ numPedido }) => numPedido != "")                                 //2° => filtrar valores !vazios
+            .map(({ numPedido, index }) => ({                                           //3° => mapear agora o que restou, já configurando os dados que irei precisar
+                num_pedido: numPedido[0],
+                referencia: historicoSheet.getRange("B" + index).getValue(),
+                total_conferido: historicoSheet.getRange("F" + index).getValue(),
+                index: index
             }))
             .filter(({ num_pedido }) => num_pedido == numPedido)
 
         return historicoData
     }
+
+    returnAvailableRange(numPedido, referencia) {               //Retornarei apenas a posição onde poderei estar inserindo a linha
+        const historicoSheet = new SetActiveSheet().setHistoricoSheet()                 //Setando a planilha histórico            
+
+        const historicoData = historicoSheet.getRange("A:A").getValues()                //Configurando a variável data            
+            .map((pedido, index) => ({ numPedido: pedido, index: index + 1 }))          //1° => mapear os dados para conseguir salvar on index (a linha que foi encontrada)                      
+            .filter(({ numPedido }) => numPedido != "")                                 //2° => filtrar valores !vazios
+            .map(({ numPedido, index }) => ({                                           //3° => mapear agora o que restou, já configurando os dados que irei precisar
+                num_pedido: numPedido[0],
+                referencia: historicoSheet.getRange("B" + index).getValue(),
+                total_conferido: historicoSheet.getRange("F" + index).getValue(),
+                index: index
+            }))
+            .filter(({ num_pedido }) => num_pedido == numPedido)                        //4° => filtrar novamente, selecionando apenas os valores que possuem o mesmo
+
+        if (!historicoData[0]) {                                        //~~~~~~~~~~Se eu não encontrar um número do pedido -> Criar duas linhas acima da segunda, e inserir na segunda linha a nova informação
+            return { message: "Não achei o número do pedido", status: -1, indexRow: 2 }
+        }
+
+        const REFERENCIA = historicoData.filter(row => row.referencia == referencia)   //Buscando a possibilidade de identificar uma referencia 
+
+        if (!REFERENCIA[0]) {                                           //~~~~~~~~~~Se encontrar o número do pedido e não encontrar uma referência -> Achar a primeira linha que possúi o número do pedido idêntica e criar uma linha acima dessa
+            return { message: "Não achei a referência", status: 0, indexRow: historicoData[0].index }
+        } else {                                                        //~~~~~~~~~~Se eu encontrar um número do pedido e uma referência idêntica eu preciso subscrever os dados daquela linha
+            return { message: "Achei tudo", status: 1, indexRow: REFERENCIA[0].index }
+        }
+    }
 }
 //FUNÇÕES PRINCIPAIS QUE SERÃO UTILIZADAS PELOS BOTÕES -> ESSAS FUNÇÕES UTILIZARÃO AS FUNÇÕES SECUNDÁRIAS
+function teste() {
+    const response = new Historico().returnAvailableRange("", "")
+
+    console.log(response)
+}
 
 function gerarPedido() {                                    //Gerar o pedido -> Coletar todas as informações necessárias para realizar o processo
     const indexSpreadsheet = new SecundaryFunctions().getUserSheet()    //Coletando o index da planilha em que o usuário está -> só funciona se for seu nome
@@ -104,6 +138,7 @@ function gerarPedido() {                                    //Gerar o pedido -> 
         // PARTE 1.5) CHECAR SE EXISTEM AS MESMAS INFORMAÇÕES NO HISTÓRICO
         DATA.push(obj)                                          //Aqui eu passo as informações coletadas para aquela variável lá em cima
     }
+
     if (PEDIDO_ON_HISTORICO[0]) {
         const referencias = PEDIDO_ON_HISTORICO.map(row => row.referencia)
         for (let i = 0; i < DATA.length; i++) {
@@ -114,7 +149,6 @@ function gerarPedido() {                                    //Gerar o pedido -> 
             DATA[i]["TotalConferidos"] = PEDIDO_ON_HISTORICO[referencias.indexOf(element.Referencia)].total_conferido
         }
     }
-    console.log(DATA[0])
 
     // PARTE 2) PEGAR AS INFORMAÇÕES SALVAS E SALVAR NA PLANILHA PRINCIPAL
     for (let i = 0; i < DATA.length; i++) {
@@ -146,7 +180,7 @@ function onEdit(e) {                                       //Função que faz o 
     const cellSelected = principalSheet.getActiveCell();                //Pegando o range que está selecionado pelo usuário
 
     const postMessage = (value) => principalSheet.getRange("D2").setValue(value)                //Essa função irá adicionar uma mensagem na área de mensagens do usuário
-    postMessage("") //Resetar as mensagens sempre que iniciar
+    postMessage("")                                                                             //Resetar as mensagens sempre que iniciar
 
     //~~~~~~~~~~~ Dados referentes à célula ativa pelo usuário
     const col = cellSelected.getA1Notation()[0]                                                 //Pegando Coluna
@@ -170,9 +204,10 @@ function onEdit(e) {                                       //Função que faz o 
         postMessage("A referência já foi finalizada")                           //se sim ele retorna uma mensagem
         return                                                                  //Retorna par não continuar a função
     }
-    const row_EAN = new SecundaryFunctions().returnEAN(row_referencia)          //Coletando o valor do EAN do item que está presente nessa linha do pedido
 
     //PASSO 2) Pegar as informações que se encontram em outras planilhas
+    const row_EAN = new SecundaryFunctions().returnEAN(row_referencia)          //Coletando o valor do EAN do item que está presente nessa linha do pedido
+
     if (row_EAN != data) {
         SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheets()[indexSpreadsheet])
         postMessage("Insira o EAN corretamente")
@@ -201,11 +236,32 @@ function onEdit(e) {                                       //Função que faz o 
     principalSheet.getRange("G" + row).setValue(Number(row_totalConferido) + qntItem)           //Inserindo o total de itens mais o que acabou de ser bipado, podendo ser >= 1
 
     // PASSO 4) Com a quantidade em mãos, devo selecionar a planilha de histórico e adicionar lá os dados referentes ao pedido
-    const DATA = principalSheet.getRange(`A${row}:E${row}`).getValues()                         //Separando as informações que que existem na planilha do usuário
+    const historicoSheet = new SetActiveSheet().setHistoricoSheet()                             //Transferindo a planilha de histórico em uma variável
+
+    // Alteraões dia 8.7.2022 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // ~~~~~~~~~~~~~~~~Antes de começar a colocar os valores no histórico, verificar onde a informação da lista vai poder ser inserida
+    // ~~~~~~~~~~~~~~~~Temos exatamente 3 opções, ou o código não encontra um número do pedido/
+    // ~~~~~~~~~~~~~~~~ou o código não encontra o número nem a referência
+    // ~~~~~~~~~~~~~~~~ou ele encontra os 2, tanto o número quanto a referência
+
+    const { indexRow, status } = new Historico().returnAvailableRange(row_numPedido, row_referencia)
+
+    if (status == -1) {
+        historicoSheet.insertRowBefore(indexRow)
+        historicoSheet.insertRowBefore(indexRow)
+    } else if (status == 0) {
+        historicoSheet.insertRowBefore(indexRow)
+    }
+
+    // Fim das alteraões dia 8.7.2022 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+    const DATA = principalSheet.getRange(`A${row}:E${row}`).getValues()                         //Separando as informações que existem na planilha do usuário
+
     DATA[0].push(Number(row_totalConferido) + qntItem)                                          //Inserindo o total de itens mais o que acabou de ser bipado, podendo ser >= 1
     DATA[0].push(userName)
-    const historicoSheet = new SetActiveSheet().setHistoricoSheet()                             //Transferindo a planilha de histórico em uma variável
-    historicoSheet.getRange("A2:G2").setValues(DATA)
+
+    historicoSheet.getRange(`A${indexRow}:G${indexRow}`).setValues(DATA)
 
     // FINAL) Retornar a planilha principal => planilha referente ao usuário que iniciou a função
     SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheets()[indexSpreadsheet])
