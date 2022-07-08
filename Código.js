@@ -2,15 +2,18 @@
 // -> PRINCIPAIS
 class SetActiveSheet {
     setDescricaoSheet() {                                   //Coletando a planilha descricao para uso
-        const descricaoSheet = SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheets()[3])
+        const activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet()
+        const descricaoSheet = activeSpreadsheet.getSheetByName("descrição")
         return descricaoSheet
     }
     setPedidosSheet() {                                     //Coletando a planilha descricao para uso
-        const pedidosSheet = SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheets()[4])
+        const activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet()
+        const pedidosSheet = activeSpreadsheet.getSheetByName("pedidos")
         return pedidosSheet
     }
     setHistoricoSheet() {                                   //Coletando a planilha descricao para uso
-        const historicoSheet = SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheets()[5])
+        const activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet()
+        const historicoSheet = activeSpreadsheet.getSheetByName("histórico de pedidos")
         return historicoSheet
     }
 }
@@ -49,6 +52,23 @@ class SecundaryFunctions {
         const EAN = descricaoSheet.getRange("D" + descricao_data[0].index).getValue()
 
         return EAN                                           //A quantidade será um numero
+    }
+    returnDate() {
+        function addZero(i) {
+            if (i < 10) { i = "0" + i }
+            return i;
+        }
+
+        const moment = Date.now()
+        const novaData = new Date(moment)
+
+        let h = addZero(novaData.getHours())
+        let m = addZero(novaData.getMinutes());
+        let s = addZero(novaData.getSeconds());
+
+        let time = h + ":" + m + ":" + s;
+
+        return (Number(novaData.getDay().toLocaleString()) + 2) + " / " + (Number(novaData.getMonth().toLocaleString()) + 2) + " / " + novaData.getFullYear().toLocaleString().replace('.', "") + "  " + time
     }
 }
 
@@ -98,12 +118,6 @@ class Historico {
     }
 }
 //FUNÇÕES PRINCIPAIS QUE SERÃO UTILIZADAS PELOS BOTÕES -> ESSAS FUNÇÕES UTILIZARÃO AS FUNÇÕES SECUNDÁRIAS
-function teste() {
-    const response = new Historico().returnAvailableRange("", "")
-
-    console.log(response)
-}
-
 function gerarPedido() {                                    //Gerar o pedido -> Coletar todas as informações necessárias para realizar o processo
     const indexSpreadsheet = new SecundaryFunctions().getUserSheet()    //Coletando o index da planilha em que o usuário está -> só funciona se for seu nome
     if (indexSpreadsheet === false) return;                             //Retornando caso o usuário não esteja na planilha referente ao seu nome
@@ -260,9 +274,9 @@ function onEdit(e) {                                       //Função que faz o 
 
     DATA[0].push(Number(row_totalConferido) + qntItem)                                          //Inserindo o total de itens mais o que acabou de ser bipado, podendo ser >= 1
     DATA[0].push(userName)
+    // const moment = Date.now()
+    // DATA[0].push(new Date(moment).toUTCString())
+    DATA[0].push(new SecundaryFunctions().returnDate())
 
-    historicoSheet.getRange(`A${indexRow}:G${indexRow}`).setValues(DATA)
-
-    // FINAL) Retornar a planilha principal => planilha referente ao usuário que iniciou a função
-    SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheets()[indexSpreadsheet])
+    historicoSheet.getRange(`A${indexRow}:H${indexRow}`).setValues(DATA)
 }
