@@ -267,7 +267,7 @@ function onEdit(e) {                                       //Função que faz o 
         historicoSheet.insertRowBefore(indexRow)
     }
 
-    // Fim das alteraões dia 8.7.2022 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Fim das alteraões dia 8.7.2022 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
     const DATA = principalSheet.getRange(`A${row}:E${row}`).getValues()                         //Separando as informações que existem na planilha do usuário
