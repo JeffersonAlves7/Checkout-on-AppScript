@@ -37,9 +37,7 @@ class SecundaryFunctions {
             .map((item, index) => ({ item: item, index: index + 1 }))               //Mapeando os valores junto do index de suas linhas
             .filter(({ item }) => item == referencia)                               //Filtrando os itens para ver se as informações são iguais as entregadas pelo parâmetro da função
 
-        const quantidade = descricaoSheet.getRange("C" + descricao_data[0].index).getValue()
-
-        return quantidade                                                           //A quantidade será um numero
+        return descricaoSheet.getRange("C" + descricao_data[0].index).getValue()    //A quantidade será um numero
     }
     returnEAN(referencia) {                                 //Retornarei o ean do item, para que em outras funções eu possa ver se o usuário realmente inseriu o ean correto para o item do checkout
         const descricaoSheet = new SetActiveSheet().setDescricaoSheet()  //Coletando a planilha descricao para uso
@@ -49,9 +47,7 @@ class SecundaryFunctions {
             .map((item, index) => ({ item: item, index: index + 1 }))                       //Mapeando os valores junto do index de suas linhas
             .filter(({ item }) => item == referencia)                                       //Filtrando os itens para ver se as informações são iguais as entregadas pelo parâmetro da função
 
-        const EAN = descricaoSheet.getRange("D" + descricao_data[0].index).getValue()
-
-        return EAN                                           //A quantidade será um numero
+        return descricaoSheet.getRange("D" + descricao_data[0].index).getValue()            //A quantidade será um numero
     }
     returnDate() {                                          //Essa função retorna a data do momento, já levando em conta nosso horário
         function addZero(i) {                               //recebe um número
@@ -148,27 +144,29 @@ function gerarPedido() {                                    //Gerar o pedido -> 
         })
 
         obj["TotalConferidos"] = ""
-        // PARTE 1.5) CHECAR SE EXISTEM AS MESMAS INFORMAÇÕES NO HISTÓRICO
+        obj["Qnt_caixa"] = new SecundaryFunctions().returnQntCaixa(obj.Referencia)
+
         DATA.push(obj)                                          //Aqui eu passo as informações coletadas para aquela variável lá em cima
     }
+    // PARTE 1.5) CHECAR SE EXISTEM AS MESMAS INFORMAÇÕES NO HISTÓRICO
 
     if (PEDIDO_ON_HISTORICO[0]) {
         const referencias = PEDIDO_ON_HISTORICO.map(row => row.referencia)
         for (let i = 0; i < DATA.length; i++) {
             const element = DATA[i];
-
             if (referencias.indexOf(element.Referencia) == -1) continue
 
             DATA[i]["TotalConferidos"] = PEDIDO_ON_HISTORICO[referencias.indexOf(element.Referencia)].total_conferido
+            // DATA[i]["Qnt_caixa"]  = new SecundaryFunctions().returnQntCaixa(element.Referencia)
         }
     }
 
     // PARTE 2) PEGAR AS INFORMAÇÕES SALVAS E SALVAR NA PLANILHA PRINCIPAL
     for (let i = 0; i < DATA.length; i++) {
-        let columns = ["A", "B", "C", "D", "E", "F", "G"]                                                  //Essa variável salva as colunas que serão utilizadas na hora de coletar as informações
-        const objectKeys = ["Numero", "Referencia", "Descricao", "UM", "Quant", "TotalConferidos"]  //Essa variável guarda as chaves de cada uma das informações presentes na variável acima
-
+        let columns = ["A", "B", "C", "D", "E", "F", "K"]                                                  //Essa variável salva as colunas que serão utilizadas na hora de coletar as informações
+        const objectKeys = ["Numero", "Referencia", "Descricao", "UM", "Quant", "TotalConferidos", "Qnt_caixa"]  //Essa variável guarda as chaves de cada uma das informações presentes na variável acima
         const element = DATA[i];
+        console.log(element)
         objectKeys.forEach((key, j) => {
             principalSheet.getRange(columns[j] + (i + 6)).setValue(element[key])
         })
