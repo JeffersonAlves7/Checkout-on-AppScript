@@ -68,7 +68,7 @@ class SecundaryFunctions {
 
         let time = h + ":" + m + ":" + s;
 
-        return (Number(novaData.getDay().toLocaleString()) + 2) + " / " + (Number(novaData.getMonth().toLocaleString()) + 2) + " / " + novaData.getFullYear().toLocaleString().replace('.', "") + "  " + time
+        return (Number(novaData.getDay().toLocaleString()) + 10) + " / " + (Number(novaData.getMonth().toLocaleString()) + 1) + " / " + novaData.getFullYear().toLocaleString().replace('.', "") + "  " + time
     }
 }
 
@@ -125,7 +125,7 @@ function gerarPedido() {                                    //Gerar o pedido -> 
 
     const principalSheet = SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheets()[indexSpreadsheet])   //Selecionando a planilha referente ao usuário para uso principal dessa função
     const numPedido = principalSheet.getRange("A2").getValue()                                                                  //Coletando número do pedido
-    new SecundaryFunctions().apagarInformacoes(principalSheet, "A6:I1000")                                                      //Apagando as informações da planilha principal
+    new SecundaryFunctions().apagarInformacoes(principalSheet, "A6:H1000")                                                      //Apagando as informações da planilha principal
 
     const pedidosSheet = new SetActiveSheet().setPedidosSheet()                                                                 //Selecionando a planilha de pedidos
 
@@ -147,9 +147,7 @@ function gerarPedido() {                                    //Gerar o pedido -> 
             obj[key] = pedidosSheet.getRange(columns[j] + pedidos_data[i].index).getValue() //Coletando a data (coluna + index)
         })
 
-        obj["Situacao"] = "Pronto para conferir"
         obj["TotalConferidos"] = ""
-
         // PARTE 1.5) CHECAR SE EXISTEM AS MESMAS INFORMAÇÕES NO HISTÓRICO
         DATA.push(obj)                                          //Aqui eu passo as informações coletadas para aquela variável lá em cima
     }
@@ -167,8 +165,8 @@ function gerarPedido() {                                    //Gerar o pedido -> 
 
     // PARTE 2) PEGAR AS INFORMAÇÕES SALVAS E SALVAR NA PLANILHA PRINCIPAL
     for (let i = 0; i < DATA.length; i++) {
-        let columns = ["A", "B", "C", "D", "E", "F", "G", "H"]                                                  //Essa variável salva as colunas que serão utilizadas na hora de coletar as informações
-        const objectKeys = ["Numero", "Referencia", "Descricao", "UM", "Quant", "Situacao", "TotalConferidos"]  //Essa variável guarda as chaves de cada uma das informações presentes na variável acima
+        let columns = ["A", "B", "C", "D", "E", "F", "G"]                                                  //Essa variável salva as colunas que serão utilizadas na hora de coletar as informações
+        const objectKeys = ["Numero", "Referencia", "Descricao", "UM", "Quant", "TotalConferidos"]  //Essa variável guarda as chaves de cada uma das informações presentes na variável acima
 
         const element = DATA[i];
         objectKeys.forEach((key, j) => {
@@ -184,7 +182,7 @@ function apagar() {                                         //Função que apaga
     const indexSpreadsheet = new SecundaryFunctions().getUserSheet()    //Coletando o index da planilha em que o usuário está -> só funciona se for seu nome
     if (indexSpreadsheet === false) return;                             //Retornando caso o usuário não esteja na planilha referente ao seu nome
     const principalSheet = SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheets()[indexSpreadsheet])   //Selecionando a planilha referente ao usuário para uso principal dessa função
-    new SecundaryFunctions().apagarInformacoes(principalSheet, "A6:I1000")                                                      //Apagando as informações da planilha principal
+    new SecundaryFunctions().apagarInformacoes(principalSheet, "A6:H1000")                                                      //Apagando as informações da planilha principal
 }
 
 function onEdit(e) {                                       //Função que faz o pocesso de reconhecer o input do usuário e enviar o pedido para as outras planilhas
@@ -194,9 +192,6 @@ function onEdit(e) {                                       //Função que faz o 
     const principalSheet = SpreadsheetApp.getActiveSheet();             //Salvando a planilha selecionada em uma constante
     const cellSelected = principalSheet.getActiveCell();                //Pegando o range que está selecionado pelo usuário
 
-    const postMessage = (value) => principalSheet.getRange("D2").setValue(value)                //Essa função irá adicionar uma mensagem na área de mensagens do usuário
-    postMessage("")                                                                             //Resetar as mensagens sempre que iniciar
-
     //~~~~~~~~~~~ Dados referentes à célula ativa pelo usuário
     const col = cellSelected.getA1Notation()[0]                                                 //Pegando Coluna
     const row = cellSelected.getA1Notation().substring(1, cellSelected.getA1Notation().length)  //Pegando Linha
@@ -204,16 +199,23 @@ function onEdit(e) {                                       //Função que faz o 
     const data = cellSelected.getValue()                                                        //Pegando o valor selecionado na célula
 
     if (cellSelected.getValue() == "") return                           // Retornando caso o usuário não tenha inserido um valor
-    if (col != "I") return                                              // Retornando caso a coluna não seja a I
+    if (col != "H") return                                              // Retornando caso a coluna não seja a I
+
+    const postMessage = (value) => {
+        principalSheet.activate()
+        principalSheet.getRange("D2").setValue(value)
+    }                //Essa função irá adicionar uma mensagem na área de mensagens do usuário
+    //Resetar as mensagens sempre que iniciar
+    postMessage("")
 
     const userName = (["Yuri", "João", "Josevaldo"])[indexSpreadsheet]  //Separando o nome do usuário para utilizar em outro momento
 
     //PASSO 1) Pegar todas as informações presentes na planilha do usuário que ativou a função
     const row_numPedido = principalSheet.getRange("A" + row).getValue()         //Coletando o número do pedido presente na linha deste pedido
     const row_referencia = principalSheet.getRange("B" + row).getValue()        //Coletando a referência do item
-    const row_totalConferido = principalSheet.getRange("G" + row).getValue()    //Coletando o total conferido
+    const row_totalConferido = principalSheet.getRange("F" + row).getValue()    //Coletando o total conferido
     const row_totalItens = principalSheet.getRange("E" + row).getValue()
-    const row_tipo = principalSheet.getRange("H" + row).getValue()              //Coletando o tipo de dado que será bipado ["CX", "PC"]
+    const row_tipo = principalSheet.getRange("G" + row).getValue()              //Coletando o tipo de dado que será bipado ["CX", "PC"]
 
     if (row_totalConferido == row_totalItens) {                                 //Checando se o pedido já foi finalizado de acordo com o total de referências bipadas
         postMessage("A referência já foi finalizada")                           //se sim ele retorna uma mensagem
@@ -224,7 +226,6 @@ function onEdit(e) {                                       //Função que faz o 
     const row_EAN = new SecundaryFunctions().returnEAN(row_referencia)          //Coletando o valor do EAN do item que está presente nessa linha do pedido
 
     if (row_EAN != data) {
-        SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheets()[indexSpreadsheet])
         postMessage("Insira o EAN corretamente")
         return
     };
@@ -237,18 +238,16 @@ function onEdit(e) {                                       //Função que faz o 
     } else if (row_tipo == "PC") {
         qntItem = 1                                                                             //Se for PC eu somo a quantidade de itens com + 1
     } else {                                                                                    //retornando caso não seja
-        SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheets()[indexSpreadsheet])
-        postMessage("Insira um tipo de conferência na célula H" + row)
+        postMessage("Insira um tipo de conferência na célula G" + row)
         return
     }
 
     if (qntItem + Number(row_totalConferido) > row_totalItens) {
         postMessage("A quantidade de itens checados passou do total")
-        SpreadsheetApp.setActiveSheet(SpreadsheetApp.getActiveSpreadsheet().getSheets()[indexSpreadsheet])
         return
     }
 
-    principalSheet.getRange("G" + row).setValue(Number(row_totalConferido) + qntItem)           //Inserindo o total de itens mais o que acabou de ser bipado, podendo ser >= 1
+    principalSheet.getRange("F" + row).setValue(Number(row_totalConferido) + qntItem)           //Inserindo o total de itens mais o que acabou de ser bipado, podendo ser >= 1
 
     // PASSO 4) Com a quantidade em mãos, devo selecionar a planilha de histórico e adicionar lá os dados referentes ao pedido
     const historicoSheet = new SetActiveSheet().setHistoricoSheet()                             //Transferindo a planilha de histórico em uma variável
@@ -280,4 +279,19 @@ function onEdit(e) {                                       //Função que faz o 
     DATA[0].push(new SecundaryFunctions().returnDate())
 
     historicoSheet.getRange(`A${indexRow}:H${indexRow}`).setValues(DATA)
+}
+
+function quantidade() {
+    const historicoSheet = new SetActiveSheet().setHistoricoSheet();                            //Selecionando a planilha de histórico
+    const h_data = historicoSheet.getRange("A2:F2500")                                          //Pegando valores da coluna A até a coluna F
+        .getValues()
+        .filter((value) => value[4] == value[5] && value[0] !== "")                             //Filtrando apenas os que tem valores iguais e removendo também os que são vazios
+
+    const pedidosSheet = new SetActiveSheet().setPedidosSheet();                                //Selecionando a planilha de histórico
+    const data = pedidosSheet.getRange("A3:B2500")                                              //Pegando valores da coluna A até a coluna F
+        .getValues()
+        .reduce((mut, now, index) => index == 1 ? [mut[0] + mut[1]] : [...mut, now[0] + now[1]])
+        .filter(value => value != "")
+
+    return ((data.length - h_data.length) + " Referências")
 }
