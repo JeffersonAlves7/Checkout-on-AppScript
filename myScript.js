@@ -90,7 +90,7 @@ class HistoricoSheet{
   constructor() {
     this.rangeReferencias = "A:A"
     this.sheet = GetSheet().historicoSheet()
-    this.keys_to_use = [ "num_pedido", "referencia", "descricao", "total", "total_conferidos", "um", "conferente" ,"data"]
+    this.keys_to_use = [ "num_pedido", "referencia", "descricao", "um", "total", "total_conferidos",  "conferente" ,"data"]
     this.columns_to_use = ["A", "B", "C", "D", "E", "F", "G", "H"] 
   }
 
