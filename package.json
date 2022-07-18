@@ -1,0 +1,15 @@
+{
+  "name": "new-project",
+  "version": "1.0.0",
+  "description": "Uma automação de pedidos de vendas, onde podemos realizar checkouts, imprimir lista de separação etc",
+  "main": "myScript.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Jefferson Alves de Carvalho",
+  "license": "ISC",
+  "dependencies": {
+    "@google/clasp": "^2.4.1"
+  }
+}
