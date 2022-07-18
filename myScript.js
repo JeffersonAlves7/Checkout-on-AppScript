@@ -70,10 +70,10 @@ class PedidosSheet{
     const { sheet, columns_to_use } = this
 
     const pedidos_values = sheet.getRange(this.numPedidoRange).getValues()
-      .map( (n,i) => ({ numPedido: n, index: i + 1 }) )
+      .map( (n,i) => ({ numPedido: n[0], index: i + 1 }) )
       .filter( ({ numPedido }) => numPedido == num )
       .map( ({ numPedido, index }) => ({
-	num_pedido: numPedido[0],
+	num_pedido: numPedido,
 	referencia: sheet.getRange(columns_to_use[1] + index).getValue(),
 	descricao: sheet.getRange(columns_to_use[2] + index).getValue(),
 	um: sheet.getRange(columns_to_use[3] + index).getValue(),
@@ -102,10 +102,10 @@ class HistoricoSheet{
     const numPedidoRange = "A:A"
 
     return sheet.getRange(numPedidoRange).getValues()
-      .map( (v,i) => ({ num_pedido: v, index: i + 1 }))
+      .map( (v,i) => ({ num_pedido: v[0], index: i + 1 }))
       .filter( ({num_pedido}) => num_pedido != "" ) // --> Tirando valores vazios
       .map( ({num_pedido, index}) => ({
-	num_pedido: num_pedido[0], 
+	num_pedido: num_pedido, 
 	referencia: sheet.getRange(referenciaColumn + index).getValue(),
 	total_conferido: sheet.getRange(totalConferidoColumn + index).getValue(),
 	row: index
@@ -137,14 +137,14 @@ class HistoricoSheet{
 
   returnAvailableRange( num, referencia ){
     const values = this.getValues()
-      .filter(({num_pedido}) => num_pedido[0] == num )
+      .filter(({num_pedido}) => num_pedido == num )
 
-    if( !values[0] ) { //Adicionar para criar 2 linhas acima da segunda   	//Como esse código funciona?
-      this.sheet.insertRowBefore(2)						//Ele Verifica se há um numero do pedido na planilha de histórico	
-      this.sheet.insertRowBefore(2)						//Se não ouver ele cria duas linhas no topo ara que seja inserida a primeira referência
-      return 2								//Se houver ele procura pela referência
-    }										//Se houver o numero && referencia -> Ele apenas retorna a posição desta linha
-										//Se não houver referência, ele busca a primeira posição que há uma referência, cria uma linha acima e retorna a posição dessa linha
+    if( !values[0] ) { //Adicionar para criar 2 linhas acima da segunda   	
+      this.sheet.insertRowBefore(2)						
+      this.sheet.insertRowBefore(2)					
+      return 2								
+    }										
+
     const [only_one] = values.filter( ({referencia}) => referencia == referencia )
 
     if(!only_one) { //Adicionar uma linha acima
