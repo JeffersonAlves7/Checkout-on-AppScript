@@ -87,7 +87,7 @@ class HistoricoSheet{
   constructor() {
     this.rangeReferencias = "A:A"
     this.sheet = GetSheet().historicoSheet()
-    this.keys_to_use = [ "num_pedido", "referencia", "descricao", "um", "total", "total_conferidos",  "conferente" ,"data"]
+    this.keys_to_use = [ "num_pedido", "referencia", "descricao", "um", "total", "total_conferido",  "conferente" ,"data"]
     this.columns_to_use = ["A", "B", "C", "D", "E", "F", "G", "H"] 
   }
 
@@ -108,11 +108,11 @@ class HistoricoSheet{
   }
 
   putValues( element, row ){
-    const { sheet, columns_to_use } = this
+    const { sheet, columns_to_use, keys_to_use } = this
 
-    if( Object.keys(element).length < columns_to_use.length || !sheet ) return false
+    if( Object.keys(element).length < columns_to_use.length ) return false
 
-    this.keys_to_use.forEach( (key, j) => {
+    keys_to_use.forEach( (key, j) => {
       sheet.getRange( columns_to_use[j] + row ).setValue(element[key])
     })
 
@@ -181,6 +181,7 @@ class ConferenciaSheet{
   putOneValue(element, row){
     const { sheet, columns_to_use, keys_to_use } = this
 
+    console.log(element)
     if( Object.keys(element).length < columns_to_use.length ) return
 
     keys_to_use.forEach( ( key, j ) => sheet.getRange( columns_to_use[j] + row ).setValue(element[key]) )
@@ -189,8 +190,8 @@ class ConferenciaSheet{
 
   postMessage( message ){ this.sheet.getRange("D2").setValue( message ) }
 }
-//--------->FUNÇÃO PRINCIPAL DE GERAÇÃO DE PEDIDO<---------\\
 
+//--------->FUNÇÃO PRINCIPAL DE GERAÇÃO DE PEDIDO<---------\\
 function gerarPedido(){
   const sheet = userSheets()
   if( !sheet ) return
@@ -236,7 +237,7 @@ function onEdit(){
 
   //Pegando valores inseridos na planilha do usuário
   const data = conferenciaSheet.getRowValues( SelectedRange.row )
-  if( data.total == data.total_conferidos ) {conferenciaSheet.postMessage("A referência já foi finalizada"); return}
+  if( data.total == data.total_conferido ) {conferenciaSheet.postMessage("A referência já foi finalizada"); return}
 
   //Coletando EAN
   const ean = new DescricaoSheet().getSomething(data.referencia, "D")
@@ -254,8 +255,8 @@ function onEdit(){
   const availableRange = new HistoricoSheet().returnAvailableRange(data.num_pedido, data.referencia)
 
   //Adicionando valores a linha que o usuário inseriu
-  data.total_conferidos = Number(data.total_conferidos) + qntItem
-  if( data.total_conferidos > Number( data.total ) ){ conferenciaSheet.postMessage("A quantidade inserida excede o total de referências restantes"); return }
+  data.total_conferido = Number(data.total_conferido) + qntItem
+  if( data.total_conferido > Number( data.total ) ){ conferenciaSheet.postMessage("A quantidade inserida excede o total de referências restantes"); return }
 
   data.data = SecundaryFunctions().returnDate()
   data.conferente = sheet.getName()
